@@ -23,6 +23,11 @@ public class ExtensionRequestEvaluator {
             return new ExtensionRequestResult(false, "Target grade is required");
         }
 
+        // Rejects the request if task code format is invalid
+        if (!isValidTaskCodeFormat(request.getTaskCode())) {
+            return new ExtensionRequestResult(false, "Task code format is invalid");
+        }
+
         // Rejects the request if reason is missing
         if (request.getReason() == null || request.getReason().trim().isEmpty()) {
             return new ExtensionRequestResult(false, "Reason is required");
@@ -121,5 +126,10 @@ public class ExtensionRequestEvaluator {
             default:
                 return false;
         }
+    }
+
+    // Checks whether the task code follows a simple OnTrack-style format
+    private static boolean isValidTaskCodeFormat(String taskCode) {
+        return taskCode != null && taskCode.toUpperCase().matches("\\d+\\.\\d+(P|C|D|HD)");
     }
 }
