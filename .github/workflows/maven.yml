@@ -26,3 +26,12 @@ jobs:
 
       - name: Build project
         run: mvn package
+
+      - name: Prepare artifact folder
+        run: mkdir -p staging && cp target/*.jar staging/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-request-evaluator-package
+          path: staging
