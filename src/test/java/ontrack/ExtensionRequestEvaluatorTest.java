@@ -426,4 +426,234 @@ public class ExtensionRequestEvaluatorTest {
         Assert.assertTrue(result.isApprovedForSubmission());
         Assert.assertEquals("Extension request accepted", result.getMessage());
     }
+    
+    // Tests that a null target grade should be rejected
+    @Test
+    public void testNullTargetGradeRejected() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                null,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Target grade is required", result.getMessage());
+    }
+
+    // Tests that an invalid task code format should be rejected
+    @Test
+    public void testInvalidTaskCodeFormatRejected() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "ABC",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Task code format is invalid", result.getMessage());
+    }
+
+    // Tests that DISTINCTION students can request extension for DISTINCTION tasks
+    @Test
+    public void testDistinctionStudentCanRequestDistinctionTask() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "7.1D",
+                TargetGrade.DISTINCTION,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Illness affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
+
+    // Tests that DISTINCTION students can also request extension for PASS tasks
+    @Test
+    public void testDistinctionStudentCanRequestPassTask() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                TargetGrade.DISTINCTION,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Personal issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
+
+    // Tests that HIGH_DISTINCTION students can request extension for HD tasks
+    @Test
+    public void testHighDistinctionStudentCanRequestHighDistinctionTask() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "8.1HD",
+                TargetGrade.HIGH_DISTINCTION,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Personal issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
+
+    // Tests that CREDIT students cannot request extension for DISTINCTION tasks
+    @Test
+    public void testCreditStudentCannotRequestDistinctionTask() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "7.1D",
+                TargetGrade.CREDIT,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Personal issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Selected target grade is not eligible for this task code", result.getMessage());
+    }
+
+    // Tests that HIGH_DISTINCTION students are rejected after reaching their attempt limit
+    @Test
+    public void testHighDistinctionAttemptLimitRejected() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "8.1HD",
+                TargetGrade.HIGH_DISTINCTION,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                1
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Maximum extension attempts reached for the selected target grade", result.getMessage());
+    }
+
+    // Tests that HIGH_DISTINCTION students are accepted when below the attempt limit
+    @Test
+    public void testHighDistinctionAttemptStillAllowed() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "8.1HD",
+                TargetGrade.HIGH_DISTINCTION,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
+
+    // Tests that a request submitted exactly at the deadline should still be accepted
+    @Test
+    public void testRequestSubmittedExactlyAtDeadlineAccepted() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
+
+    // Tests that an extension of exactly 7 days with evidence should be accepted
+    @Test
+    public void testExtensionExactlySevenDaysWithEvidenceAccepted() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 27, 23, 59),
+                "Medical issue affected my preparation",
+                true,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
 }
