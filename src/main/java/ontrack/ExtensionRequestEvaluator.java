@@ -18,6 +18,11 @@ public class ExtensionRequestEvaluator {
             return new ExtensionRequestResult(false, "Task code is required");
         }
 
+        // Rejects the request if target grade is missing
+        if (request.getTargetGrade() == null) {
+            return new ExtensionRequestResult(false, "Target grade is required");
+        }
+
         // Rejects the request if reason is missing
         if (request.getReason() == null || request.getReason().trim().isEmpty()) {
             return new ExtensionRequestResult(false, "Reason is required");
