@@ -288,4 +288,142 @@ public class ExtensionRequestEvaluatorTest {
         Assert.assertTrue(result.isApprovedForSubmission());
         Assert.assertEquals("Extension request accepted", result.getMessage());
     }
+
+    // Tests that completed tasks cannot receive extension
+    @Test
+    public void testCompletedTaskRejected() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                true,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Task is already completed", result.getMessage());
+    }
+
+    // Tests that duplicate pending requests should be rejected
+    @Test
+    public void testExistingPendingRequestRejected() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                true,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("An extension request is already pending for this task", result.getMessage());
+    }
+
+    // Tests that PASS students cannot request extension for CREDIT tasks
+    @Test
+    public void testPassStudentCannotRequestCreditTask() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "6.1C",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Selected target grade is not eligible for this task code", result.getMessage());
+    }
+
+    // Tests that CREDIT students can request extension for CREDIT tasks
+    @Test
+    public void testCreditStudentCanRequestCreditTask() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "6.1C",
+                TargetGrade.CREDIT,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Personal issue affected my preparation",
+                false,
+                false,
+                false,
+                0
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
+
+    // Tests that DISTINCTION students cannot exceed their maximum attempt limit
+    @Test
+    public void testDistinctionAttemptLimitRejected() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "7.1D",
+                TargetGrade.DISTINCTION,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                1
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertFalse(result.isApprovedForSubmission());
+        Assert.assertEquals("Maximum extension attempts reached for the selected target grade", result.getMessage());
+    }
+
+    // Tests that PASS students can still request when they are below the maximum attempt limit
+    @Test
+    public void testPassAttemptLimitStillAllowed() {
+        ExtensionRequest request = new ExtensionRequest(
+                "225145633",
+                "5.2P",
+                TargetGrade.PASS,
+                LocalDateTime.of(2026, 5, 20, 23, 59),
+                LocalDateTime.of(2026, 5, 19, 10, 0),
+                LocalDateTime.of(2026, 5, 22, 23, 59),
+                "Medical issue affected my preparation",
+                false,
+                false,
+                false,
+                1
+        );
+
+        ExtensionRequestResult result = ExtensionRequestEvaluator.evaluate(request);
+
+        Assert.assertTrue(result.isApprovedForSubmission());
+        Assert.assertEquals("Extension request accepted", result.getMessage());
+    }
 }
